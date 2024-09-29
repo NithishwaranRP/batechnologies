@@ -4,6 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const multer = require('multer');
 const admin = require('firebase-admin');
+const cors = require('cors'); // Import CORS
 
 // Initialize Firebase Admin SDK with service account
 const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
@@ -14,6 +15,7 @@ admin.initializeApp({
 });
 
 const app = express();
+app.use(cors()); 
 app.use(bodyParser.json());
 const upload = multer();
 
