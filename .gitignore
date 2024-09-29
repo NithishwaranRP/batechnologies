@@ -11,6 +11,7 @@ firebase-debug.*.log*
 .firebase/
 
 # Firebase config
+authentication-app-e095d-firebase-adminsdk-u457m-dd35ee1c06.json
 
 # Uncomment this if you'd like others to create their own Firebase project.
 # For a team working on the same Firebase project(s), it is recommended to leave

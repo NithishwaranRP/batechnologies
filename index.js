@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { onRequest } = require("firebase-functions/v2/https");
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -5,7 +6,7 @@ const multer = require('multer');
 const admin = require('firebase-admin');
 
 // Initialize Firebase Admin SDK with service account
-const serviceAccount = require('./authentication-app-e095d-firebase-adminsdk-u457m-dd35ee1c06.json');
+const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
