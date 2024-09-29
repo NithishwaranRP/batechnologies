@@ -1,13 +1,10 @@
 {
-  "scripts": {
-    "start": "node index.js"
-  },
   "dependencies": {
     "body-parser": "^1.20.3",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "firebase-admin": "^12.5.0",
-    "firebase-functions": "^6.0.1",
     "multer": "^1.4.5-lts.1"
   }
+    // Just a comment to trigger a change
 }
