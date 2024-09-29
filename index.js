@@ -7,7 +7,6 @@ const admin = require('firebase-admin');
 const cors = require('cors'); // Import CORS
 
 // Initialize Firebase Admin SDK with service account
-// const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
 const serviceAccount = require('./authentication-app-e095d-firebase-adminsdk-u457m-dd35ee1c06.json'); // Update the path
 
 admin.initializeApp({
@@ -254,6 +253,10 @@ app.delete('/api/delete-post/:id', async (req, res) => {
   const postId = req.params.id;
   const { userId } = req.body;
 
+  if (!userId) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
   try {
     const postRef = admin.database().ref(`posts/${postId}`);
     const postSnapshot = await postRef.once('value');
@@ -263,11 +266,15 @@ app.delete('/api/delete-post/:id', async (req, res) => {
     }
 
     const postData = postSnapshot.val();
+    
+    // Check if the user is authorized to delete this post
     if (postData.phoneNumber !== userId) {
       return res.status(403).json({ error: 'You are not authorized to delete this post' });
     }
 
+    // Delete the post
     await postRef.remove();
+
     return res.status(200).json({ message: 'Post deleted successfully' });
   } catch (error) {
     console.error('Error deleting post:', error);
@@ -275,53 +282,5 @@ app.delete('/api/delete-post/:id', async (req, res) => {
   }
 });
 
-// Endpoint to add a comment
-app.post('/api/add-comment/:postId', async (req, res) => {
-  const postId = req.params.postId;
-  const { userId, comment } = req.body;
-
-  if (!userId || !comment) {
-    return res.status(400).json({ error: 'All fields are required' });
-  }
-
-  try {
-    const db = admin.database();
-    const ref = db.ref(`posts/${postId}/comments`);
-    await ref.push({ userId, comment, createdAt: new Date().toISOString() });
-
-    res.status(200).json({ message: 'Comment added successfully' });
-  } catch (error) {
-    console.error('Error saving comment:', error);
-    res.status(500).json({ error: 'Failed to save comment' });
-  }
-});
-
-// Endpoint to get comments for a post
-app.get('/api/comments/:postId', async (req, res) => {
-  const postId = req.params.postId;
-  
-  try {
-    const commentsRef = admin.database().ref(`posts/${postId}/comments`);
-    const snapshot = await commentsRef.once('value');
-    const commentsData = snapshot.val() || {};
-
-    const commentsArray = Object.entries(commentsData).map(([key, data]) => ({
-      id: key,
-      ...data,
-    }));
-
-    return res.status(200).json(commentsArray);
-  } catch (error) {
-    console.error('Error fetching comments:', error);
-    return res.status(500).send('Internal Server Error');
-  }
-});
-
-// Start the server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-// Export the Express app as a Cloud Function
+// Export the Express app as a Firebase Cloud Function
 exports.api = onRequest(app);
