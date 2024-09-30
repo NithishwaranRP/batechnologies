@@ -1,5 +1,5 @@
+// index.js
 require('dotenv').config();
-const { onRequest } = require('firebase-functions/v2/https');
 const express = require('express');
 const bodyParser = require('body-parser');
 const admin = require('firebase-admin');
@@ -268,5 +268,5 @@ app.delete('/api/delete-post/:id', async (req, res) => {
   }
 });
 
-// Ensure this is the last line of your file
-exports.api = onRequest(app);
+// Export the API routes for Vercel
+module.exports = app;
