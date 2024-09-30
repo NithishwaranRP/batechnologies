@@ -17,6 +17,24 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+// Middleware to verify ID token
+const verifyToken = async (req, res, next) => {
+  const idToken = req.headers.authorization?.split('Bearer ')[1];
+
+  if (!idToken) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    req.user = decodedToken; // Attach the decoded token to the request object
+    next();
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+};
+
 // Function to generate a random OTP
 const generateOTP = () => {
   return Math.floor(1000 + Math.random() * 9000).toString();
@@ -38,7 +56,7 @@ const sendDynamicNotification = async (fcmToken, title, body) => {
 };
 
 // Endpoint to handle phone number and send OTP
-app.post('/api/phone', async (req, res) => {
+app.post('/api/phone', verifyToken, async (req, res) => {
   const { phoneNumber, fcmToken, deviceId } = req.body;
 
   if (!phoneNumber || !fcmToken || !deviceId) {
@@ -98,7 +116,7 @@ app.post('/api/phone', async (req, res) => {
 });
 
 // Endpoint to verify the OTP
-app.post('/api/verify-otp', async (req, res) => {
+app.post('/api/verify-otp', verifyToken, async (req, res) => {
   const { phoneNumber, otp } = req.body;
 
   if (!phoneNumber || !otp) {
@@ -130,7 +148,7 @@ app.post('/api/verify-otp', async (req, res) => {
 });
 
 // Endpoint to add user data
-app.post('/api/add-data', async (req, res) => {
+app.post('/api/add-data', verifyToken, async (req, res) => {
   const { name, phoneNumber, email, profilePic } = req.body;
 
   if (!name || !phoneNumber || !email || !profilePic) {
@@ -150,7 +168,7 @@ app.post('/api/add-data', async (req, res) => {
 });
 
 // Endpoint to get user data by phone number
-app.get('/api/user-data', async (req, res) => {
+app.get('/api/user-data', verifyToken, async (req, res) => {
   try {
     const usersRef = admin.database().ref('userData');
     const snapshot = await usersRef.once('value');
@@ -169,7 +187,7 @@ app.get('/api/user-data', async (req, res) => {
 });
 
 // Endpoint to add a post
-app.post('/api/add-post', async (req, res) => {
+app.post('/api/add-post', verifyToken, async (req, res) => {
   const { phoneNumber, caption, imageUrl } = req.body;
 
   if (!phoneNumber || !caption || !imageUrl) {
@@ -209,7 +227,7 @@ app.get('/api/posts', async (req, res) => {
 });
 
 // Endpoint to edit a post
-app.put('/api/edit-post/:id', async (req, res) => {
+app.put('/api/edit-post/:id', verifyToken, async (req, res) => {
   const postId = req.params.id;
   const { userId, imageUrl, caption } = req.body;
 
@@ -241,7 +259,7 @@ app.put('/api/edit-post/:id', async (req, res) => {
 });
 
 // Endpoint to delete a post
-app.delete('/api/delete-post/:id', async (req, res) => {
+app.delete('/api/delete-post/:id', verifyToken, async (req, res) => {
   const postId = req.params.id;
   const { userId } = req.body;
 
@@ -260,7 +278,7 @@ app.delete('/api/delete-post/:id', async (req, res) => {
     }
 
     await postRef.remove();
-
+    
     return res.status(200).json({ message: 'Post deleted successfully' });
   } catch (error) {
     console.error('Error deleting post:', error);
@@ -268,5 +286,8 @@ app.delete('/api/delete-post/:id', async (req, res) => {
   }
 });
 
-// Export the API routes for Vercel
-module.exports = app;
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
