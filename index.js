@@ -1,13 +1,13 @@
 require('dotenv').config();
-const { onRequest } = require("firebase-functions/v2/https");
+const { onRequest } = require('firebase-functions/v2/https');
 const express = require('express');
 const bodyParser = require('body-parser');
-const multer = require('multer');
 const admin = require('firebase-admin');
 const cors = require('cors'); // Import CORS
 
 // Initialize Firebase Admin SDK with service account
-const serviceAccount = require('./authentication-app-e095d-firebase-adminsdk-u457m-dd35ee1c06.json'); // Update the path
+const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS); // Uncomment this to use environment variables
+// const serviceAccount = require('./authentication-app-e095d-firebase-adminsdk-u457m-dd35ee1c06.json'); // Use this if not using env variables
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -17,7 +17,6 @@ admin.initializeApp({
 const app = express();
 app.use(cors()); 
 app.use(bodyParser.json());
-const upload = multer();
 
 // Function to generate a random OTP
 const generateOTP = () => {
@@ -154,17 +153,15 @@ app.post('/api/add-data', async (req, res) => {
 // Endpoint to get user data by phone number
 app.get('/api/user-data', async (req, res) => {
   try {
-    const usersRef = admin.database().ref('userData'); // Change to userData
+    const usersRef = admin.database().ref('userData');
     const snapshot = await usersRef.once('value');
     const usersData = snapshot.val() || {};
 
-    // Convert to an array and include phoneNumber
     const usersArray = Object.entries(usersData).map(([key, data]) => ({
-      id: key, // Store the unique ID (key)
+      id: key,
       ...data,
     }));
 
-    console.log('Fetched user data:', usersArray); // Debugging line
     return res.status(200).json(usersArray);
   } catch (error) {
     console.error('Error fetching user data:', error);
@@ -184,7 +181,6 @@ app.post('/api/add-post', async (req, res) => {
     const db = admin.database();
     const ref = db.ref('posts');
     
-    // Save the post data
     await ref.push({ phoneNumber, caption, imageUrl, createdAt: new Date().toISOString() });
 
     res.status(200).json({ message: 'Post added successfully', imageUrl });
@@ -201,9 +197,8 @@ app.get('/api/posts', async (req, res) => {
     const snapshot = await postsRef.once('value');
     const postsData = snapshot.val() || {};
 
-    // Convert to an array and include userId
     const postsArray = Object.entries(postsData).map(([key, data]) => ({
-      id: key, // Store the unique ID (key)
+      id: key,
       ...data,
     }));
 
@@ -233,12 +228,10 @@ app.put('/api/edit-post/:id', async (req, res) => {
 
     const postData = postSnapshot.val();
     
-    // Check if the user is authorized to edit this post
     if (postData.phoneNumber !== userId) {
       return res.status(403).json({ error: 'You are not authorized to edit this post' });
     }
 
-    // Update the post's image URL and caption
     await postRef.update({ imageUrl, caption });
     
     return res.status(200).json({ message: 'Post updated successfully' });
@@ -253,10 +246,6 @@ app.delete('/api/delete-post/:id', async (req, res) => {
   const postId = req.params.id;
   const { userId } = req.body;
 
-  if (!userId) {
-    return res.status(400).json({ error: 'User ID is required' });
-  }
-
   try {
     const postRef = admin.database().ref(`posts/${postId}`);
     const postSnapshot = await postRef.once('value');
@@ -267,12 +256,10 @@ app.delete('/api/delete-post/:id', async (req, res) => {
 
     const postData = postSnapshot.val();
     
-    // Check if the user is authorized to delete this post
     if (postData.phoneNumber !== userId) {
       return res.status(403).json({ error: 'You are not authorized to delete this post' });
     }
 
-    // Delete the post
     await postRef.remove();
 
     return res.status(200).json({ message: 'Post deleted successfully' });
@@ -282,5 +269,5 @@ app.delete('/api/delete-post/:id', async (req, res) => {
   }
 });
 
-// Export the Express app as a Firebase Cloud Function
+// Export the app for Firebase Cloud Functions
 exports.api = onRequest(app);
