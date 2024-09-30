@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/index.js": {
-      "runtime": "@vercel/node"
+      "runtime": "nodejs18.x" 
     }
   },
   "routes": [
@@ -9,7 +9,7 @@
   ],
   "build": {
     "env": {
-      "FIREBASE_CREDENTIALS": "@firebase-credentials"
+      "FIREBASE_CREDENTIALS": "@firebase-credentials" 
     }
   }
 }
