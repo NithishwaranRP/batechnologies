@@ -240,10 +240,9 @@ app.put('/api/edit-post/:id', async (req, res) => {
   }
 });
 
-// Endpoint to delete a post
 app.delete('/api/delete-post/:id', async (req, res) => {
   const postId = req.params.id;
-  const { userId } = req.body;
+  const userId = req.query.userId; // Change here to read userId from query
 
   try {
     const postRef = admin.database().ref(`posts/${postId}`);
