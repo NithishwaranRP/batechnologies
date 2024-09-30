@@ -242,30 +242,42 @@ app.put('/api/edit-post/:id', async (req, res) => {
 
 app.delete('/api/delete-post/:id', async (req, res) => {
   const postId = req.params.id;
-  const userId = req.query.userId; // Change here to read userId from query
+  const userId = req.query.userId; // Fetch userId from query string
+
+  console.log(`Received request to delete post: ${postId} by user: ${userId}`);
 
   try {
     const postRef = admin.database().ref(`posts/${postId}`);
     const postSnapshot = await postRef.once('value');
 
     if (!postSnapshot.exists()) {
+      console.log('Post not found');
       return res.status(404).json({ error: 'Post not found' });
     }
 
     const postData = postSnapshot.val();
-    
+    console.log('Post Data:', postData); // Log the entire post data for debugging
+
+    // Log the comparison
+    console.log(`Comparing: Post Phone - ${postData.phoneNumber}, User ID - ${userId}`);
+
+    // Compare userId and postData.phoneNumber
     if (postData.phoneNumber !== userId) {
+      console.log(`Mismatch! Post phone: ${postData.phoneNumber}, User ID: ${userId}`);
       return res.status(403).json({ error: 'You are not authorized to delete this post' });
     }
 
+    // If the IDs match, remove the post
     await postRef.remove();
-
+    console.log('Post deleted successfully');
     return res.status(200).json({ message: 'Post deleted successfully' });
   } catch (error) {
     console.error('Error deleting post:', error);
     return res.status(500).json({ error: 'Failed to delete post' });
   }
 });
+
+
 
 const PORT = process.env.PORT || 3000;
 
