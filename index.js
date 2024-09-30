@@ -3,11 +3,10 @@ const { onRequest } = require('firebase-functions/v2/https');
 const express = require('express');
 const bodyParser = require('body-parser');
 const admin = require('firebase-admin');
-const cors = require('cors'); // Import CORS
+const cors = require('cors');
 
 // Initialize Firebase Admin SDK with service account
-const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS); // Uncomment this to use environment variables
-// const serviceAccount = require('./authentication-app-e095d-firebase-adminsdk-u457m-dd35ee1c06.json'); // Use this if not using env variables
+const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS); 
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -15,7 +14,7 @@ admin.initializeApp({
 });
 
 const app = express();
-app.use(cors()); 
+app.use(cors());
 app.use(bodyParser.json());
 
 // Function to generate a random OTP
@@ -269,5 +268,5 @@ app.delete('/api/delete-post/:id', async (req, res) => {
   }
 });
 
-// Export the app for Firebase Cloud Functions
+// Ensure this is the last line of your file
 exports.api = onRequest(app);
